@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Barcelona Recycling Helper</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <span class="logo" aria-hidden="true">&#9851;</span>
+    <div>
+      <h1>Barcelona Recycling Helper</h1>
+      <p>Not sure where something goes? Snap it and find out.</p>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="panel intro">
+      <span class="logo" aria-hidden="true">&#9851;</span>
+      <p>
+        This app helps you recycle right, <strong>Barcelona-style</strong>.
+        Take a photo of an item, or upload one, and we'll tell you what
+        it's made of and which bin (contenidor) it belongs in. Everything
+        runs right here in your browser &mdash; your photo never leaves
+        your device.
+      </p>
+    </section>
+
+    <section class="panel capture" aria-labelledby="capture-title">
+      <h2 id="capture-title">Add a photo</h2>
+
+      <div class="capture-buttons" id="captureButtons">
+        <button type="button" id="cameraBtn">&#128247; Take a photo</button>
+        <button type="button" id="uploadBtn">&#128196; Upload a photo</button>
+      </div>
+      <p class="camera-error" id="cameraError" hidden></p>
+      <p class="model-note" id="modelNote">Getting things ready&hellip;</p>
+
+      <input type="file" id="fileInput" accept="image/*" hidden>
+
+      <div id="cameraPanel" hidden>
+        <video id="cameraVideo" autoplay playsinline muted></video>
+        <div class="camera-actions">
+          <button type="button" id="captureBtn">Capture</button>
+          <button type="button" id="cancelCameraBtn">Cancel</button>
+        </div>
+      </div>
+      <canvas id="captureCanvas" hidden></canvas>
+
+      <div id="previewWrap" hidden>
+        <img id="previewImg" alt="The photo you selected">
+        <button type="button" id="resetBtn" class="link-btn">Try a different photo</button>
+      </div>
+    </section>
+
+    <section class="panel result" aria-labelledby="result-title" aria-live="polite">
+      <h2 id="result-title">What we found</h2>
+
+      <div id="emptyState" class="empty">
+        Take or upload a photo of an item. We'll tell you what material it
+        is and which bin to use.
+      </div>
+
+      <div id="loadingState" class="loading" hidden>
+        <span class="spinner" aria-hidden="true">&#9851;</span>
+        <p>Processing&hellip;</p>
+      </div>
+
+      <div id="errorState" class="error" hidden></div>
+
+      <div id="resultState" hidden>
+        <p class="material">That looks like&hellip;
+          <strong id="materialName"></strong>
+        </p>
+        <p class="confidence-note" id="confidenceNote"></p>
+
+        <div class="bin-card" id="binCard" hidden>
+          <p class="bin-name" id="binName"></p>
+          <p class="bin-catalan" id="binCatalan"></p>
+          <p class="tip" id="binTip"></p>
+        </div>
+
+        <div class="unsure-card" id="unsureCard" hidden></div>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

@@ -9,20 +9,25 @@ CONFIDENCE_THRESHOLD = 55.0  # below this, we tell the user we're not sure
 
 NOT_SURE_MESSAGE = (
     "I'm not entirely sure about this one. When in doubt, put it in the "
-    "trash (grey bin), or look it up on the Barcelona recycling site "
-    "before tossing it."
+    "trash (grey bin), or check Barcelona's official Cercador de residus "
+    "(ajuntament.barcelona.cat/cercador-de-residus/ca) before tossing it."
 )
 
 # One entry per label the model can predict (see recycling-model/config.json).
+# Bin colors and categories are from the city's own guidance; a tip phrased
+# as "generally"/"most systems" is general recycling practice we haven't
+# separately confirmed is a written Barcelona-specific rule.
 GUIDE = {
     "cardboard": {
         "bin": "Blue bin — paper & cardboard",
         "catalan": "Contenidor blau",
         "color": "#2f6fed",
         "tip": (
-            "Flatten the box first. If it's greasy or food-stained (like a "
-            "used pizza box), it can't go here — put it in the grey "
-            "bin instead."
+            "Flatten the box first. Heavily greasy or food-soaked cardboard "
+            "(like a well-used pizza box) is iffy for paper recycling in "
+            "most systems, since the oil contaminates the pulp — if you're "
+            "not sure about a specific item, check Barcelona's Cercador de "
+            "residus (ajuntament.barcelona.cat/cercador-de-residus/ca)."
         ),
     },
     "paper": {
@@ -49,7 +54,8 @@ GUIDE = {
         "catalan": "Contenidor groc",
         "color": "#c98a00",
         "tip": (
-            "Cans, tins and aluminium foil, ideally rinsed. Small "
+            "Cans, tins and aluminium foil. Barcelona's own guidance says "
+            "you don't need to clean containers before binning them. Small "
             "appliances or batteries go to a Green Point instead."
         ),
     },
@@ -58,9 +64,9 @@ GUIDE = {
         "catalan": "Contenidor groc",
         "color": "#c98a00",
         "tip": (
-            "Bottles, tubs, trays and film all count in Barcelona. Give it "
-            "a quick rinse if it held food or cosmetics — empty "
-            "cosmetics packaging goes here too."
+            "Bottles, tubs, trays and film all count in Barcelona. You "
+            "don't need to clean it first — just take the caps off "
+            "bottles. Empty cosmetics packaging goes here too."
         ),
     },
     "trash": {

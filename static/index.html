@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Barcelona Recycling Helper</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <span class="logo" aria-hidden="true">&#9851;</span>
+    <div>
+      <h1>Barcelona Recycling Helper</h1>
+      <p>Not sure where something goes? Snap it and find out.</p>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="panel intro">
+      <span class="logo" aria-hidden="true">&#9851;</span>
+      <p>
+        This app helps you recycle right, <strong>Barcelona-style</strong>.
+        Take a photo of an item, or upload one, and we'll tell you what
+        it's made of and which bin (contenidor) it belongs in.
+      </p>
+    </section>
+
+    <section class="panel capture" aria-labelledby="capture-title">
+      <h2 id="capture-title">Add a photo</h2>
+
+      <div class="capture-buttons" id="captureButtons">
+        <button type="button" id="cameraBtn">&#128247; Take a photo</button>
+        <button type="button" id="uploadBtn">&#128196; Upload a photo</button>
+      </div>
+      <p class="camera-error" id="cameraError" hidden></p>
+
+      <input type="file" id="fileInput" accept="image/*" hidden>
+
+      <div id="cameraPanel" hidden>
+        <video id="cameraVideo" autoplay playsinline muted></video>
+        <div class="camera-actions">
+          <button type="button" id="captureBtn">Capture</button>
+          <button type="button" id="cancelCameraBtn">Cancel</button>
+        </div>
+      </div>
+      <canvas id="captureCanvas" hidden></canvas>
+
+      <div id="previewWrap" hidden>
+        <img id="previewImg" alt="The photo you selected">
+        <button type="button" id="resetBtn" class="link-btn">Try a different photo</button>
+      </div>
+    </section>
+
+    <section class="panel result" aria-labelledby="result-title" aria-live="polite">
+      <h2 id="result-title">What we found</h2>
+
+      <div id="emptyState" class="empty">
+        Take or upload a photo of an item. We'll tell you what material it
+        is and which bin to use.
+      </div>
+
+      <div id="loadingState" class="loading" hidden>
+        <span class="spinner" aria-hidden="true">&#9851;</span>
+        <p>Processing&hellip;</p>
+      </div>
+
+      <div id="errorState" class="error" hidden></div>
+
+      <div id="resultState" hidden>
+        <p class="material">That looks like&hellip;
+          <strong id="materialName"></strong>
+        </p>
+        <p class="confidence-note" id="confidenceNote"></p>
+
+        <div class="bin-card" id="binCard" hidden>
+          <p class="bin-name" id="binName"></p>
+          <p class="bin-catalan" id="binCatalan"></p>
+          <p class="tip" id="binTip"></p>
+        </div>
+
+        <div class="unsure-card" id="unsureCard" hidden></div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const fileInput = document.getElementById("fileInput");
+    const uploadBtn = document.getElementById("uploadBtn");
+    const cameraBtn = document.getElementById("cameraBtn");
+    const captureButtons = document.getElementById("captureButtons");
+    const cameraPanel = document.getElementById("cameraPanel");
+    const cameraVideo = document.getElementById("cameraVideo");
+    const captureBtn = document.getElementById("captureBtn");
+    const cancelCameraBtn = document.getElementById("cancelCameraBtn");
+    const captureCanvas = document.getElementById("captureCanvas");
+    const previewWrap = document.getElementById("previewWrap");
+    const previewImg = document.getElementById("previewImg");
+    const resetBtn = document.getElementById("resetBtn");
+    const cameraError = document.getElementById("cameraError");
+
+    const emptyState = document.getElementById("emptyState");
+    const loadingState = document.getElementById("loadingState");
+    const errorState = document.getElementById("errorState");
+    const resultState = document.getElementById("resultState");
+    const binCard = document.getElementById("binCard");
+    const unsureCard = document.getElementById("unsureCard");
+
+    let activeStream = null;
+    let previewUrl = null;
+
+    uploadBtn.addEventListener("click", () => fileInput.click());
+    fileInput.addEventListener("change", () => {
+      const file = fileInput.files[0];
+      if (file) handleImage(file);
+    });
+
+    cameraBtn.addEventListener("click", openCamera);
+    cancelCameraBtn.addEventListener("click", closeCamera);
+    captureBtn.addEventListener("click", capturePhoto);
+    resetBtn.addEventListener("click", resetAll);
+
+    async function openCamera() {
+      cameraError.hidden = true;
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        showCameraError();
+        return;
+      }
+      try {
+        activeStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "environment" },
+        });
+        cameraVideo.srcObject = activeStream;
+        cameraPanel.hidden = false;
+      } catch (e) {
+        showCameraError();
+      }
+    }
+
+    function showCameraError() {
+      cameraError.textContent = "Camera isn't available here. Try uploading a photo instead.";
+      cameraError.hidden = false;
+    }
+
+    function closeCamera() {
+      if (activeStream) {
+        activeStream.getTracks().forEach(track => track.stop());
+        activeStream = null;
+      }
+      cameraPanel.hidden = true;
+    }
+
+    function capturePhoto() {
+      const width = cameraVideo.videoWidth;
+      const height = cameraVideo.videoHeight;
+      if (!width || !height) return;
+      captureCanvas.width = width;
+      captureCanvas.height = height;
+      captureCanvas.getContext("2d").drawImage(cameraVideo, 0, 0, width, height);
+      captureCanvas.toBlob(blob => {
+        if (blob) handleImage(blob);
+      }, "image/jpeg", 0.9);
+      closeCamera();
+    }
+
+    function resetAll() {
+      fileInput.value = "";
+      if (previewUrl) { URL.revokeObjectURL(previewUrl); previewUrl = null; }
+      previewWrap.hidden = true;
+      captureButtons.hidden = false;
+      emptyState.hidden = false;
+      errorState.hidden = true;
+      resultState.hidden = true;
+      loadingState.hidden = true;
+    }
+
+    async function handleImage(fileOrBlob) {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      previewUrl = URL.createObjectURL(fileOrBlob);
+      previewImg.src = previewUrl;
+      previewWrap.hidden = false;
+      captureButtons.hidden = true;
+
+      emptyState.hidden = true;
+      errorState.hidden = true;
+      resultState.hidden = true;
+      loadingState.hidden = false;
+
+      try {
+        const formData = new FormData();
+        formData.append("photo", fileOrBlob, "photo.jpg");
+        const response = await fetch("/predict", { method: "POST", body: formData });
+        if (!response.ok) { showError(); return; }
+        const data = await response.json();
+        showResult(data);
+      } catch (e) {
+        showError();
+      }
+    }
+
+    function showError() {
+      loadingState.hidden = true;
+      resultState.hidden = true;
+      emptyState.hidden = true;
+      errorState.textContent = "Oops! That didn't work. We are fixing it asap, come back soon";
+      errorState.hidden = false;
+    }
+
+    function showResult(data) {
+      loadingState.hidden = true;
+      errorState.hidden = true;
+      emptyState.hidden = true;
+
+      document.getElementById("materialName").textContent = data.material;
+      document.getElementById("confidenceNote").textContent =
+        data.confidence + "% confident" + (data.unsure ? " — that's a bit low" : "");
+
+      if (data.unsure) {
+        binCard.hidden = true;
+        unsureCard.hidden = false;
+        unsureCard.textContent = data.message;
+      } else {
+        unsureCard.hidden = true;
+        binCard.hidden = false;
+        binCard.style.borderLeftColor = data.color;
+        document.getElementById("binName").textContent = data.bin;
+        document.getElementById("binCatalan").textContent = data.catalan;
+        document.getElementById("binTip").textContent = data.tip;
+      }
+
+      resultState.hidden = false;
+    }
+  </script>
+</body>
+</html>

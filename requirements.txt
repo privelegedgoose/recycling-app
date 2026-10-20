@@ -1,0 +1,9 @@
+# Libraries for the Barcelona Recycling Helper app.
+# Works with Python 3.14 (also 3.10-3.13), on both macOS and Windows.
+fastapi>=0.115,<1
+uvicorn>=0.30
+python-multipart>=0.0.9
+pillow>=10.0
+transformers>=5.0,<6
+torch>=2.9
+torchvision>=0.20
